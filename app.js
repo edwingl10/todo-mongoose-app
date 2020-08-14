@@ -33,6 +33,13 @@ const item3 = new Item({
 
 const defaultItems = [item1, item2, item3];
 
+const listSchema = {
+  name: String, 
+  items: [itemsSchema]
+};
+
+const List = mongoose.model("List", listSchema);
+
 
 app.get("/", function(req, res) {
 
@@ -55,6 +62,33 @@ app.get("/", function(req, res) {
     }
 
   });
+
+});
+
+//dynamic route for creating another todolist
+app.get("/:customListName", function(req, res){
+  const customListName = req.params.customListName;
+
+  List.findOne({name: customListName}, function(err, foundList){
+    if(!err){
+      if(!foundList){
+        //create a new list
+        const list = new List({
+          name: customListName,
+          items: defaultItems
+        });
+      
+        list.save();
+        res.redirect("/"+customListName);
+      }
+      else{
+        //show existing list 
+        res.render("list", {listTitle: foundList.name, newListItems: foundList.items});
+      }
+    }
+
+  });
+
 
 });
 
@@ -83,9 +117,6 @@ app.post("/delete", function(req,res){
 
 });
 
-app.get("/work", function(req,res){
-  res.render("list", {listTitle: "Work List", newListItems: workItems});
-});
 
 app.get("/about", function(req, res){
   res.render("about");
